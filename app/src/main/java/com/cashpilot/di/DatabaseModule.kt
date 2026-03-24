@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.cashpilot.data.CashPilotRepository
 import com.cashpilot.data.local.CashPilotDatabase
+import com.cashpilot.data.local.migration.MIGRATION_1_2
 import com.cashpilot.data.local.dao.ExpenseDao
 import com.cashpilot.data.local.dao.FixedExpenseDao
 import com.cashpilot.data.local.dao.IncomeDao
@@ -25,7 +26,9 @@ object DatabaseModule {
             context,
             CashPilotDatabase::class.java,
             "cashpilot-db"
-        ).build()
+        )
+            .addMigrations(MIGRATION_1_2)
+            .build()
 
     @Provides
     fun provideIncomeDao(db: CashPilotDatabase): IncomeDao = db.incomeDao()

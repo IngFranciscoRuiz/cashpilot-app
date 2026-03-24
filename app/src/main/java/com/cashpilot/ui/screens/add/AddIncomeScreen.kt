@@ -17,11 +17,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.cashpilot.ui.components.MoneyAmountOutlinedField
 import com.cashpilot.ui.screens.income.IncomeViewModel
+import com.cashpilot.ui.util.parsePositiveMoneyOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,6 +31,7 @@ fun AddIncomeScreen(
 ) {
     var name by remember { mutableStateOf("Salario") }
     var amount by remember { mutableStateOf("") }
+    var amountError by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -50,19 +51,31 @@ fun AddIncomeScreen(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(
+        MoneyAmountOutlinedField(
             value = amount,
-            onValueChange = { amount = it.filter { c -> c.isDigit() || c == '.' } },
+            onValueChange = { amount = it; amountError = null },
             label = { Text("Monto") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            isError = amountError != null
         )
+        amountError?.let { msg ->
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = msg,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = {
-                val parsed = amount.toDoubleOrNull() ?: 0.0
+                val parsed = parsePositiveMoneyOrNull(amount)
+                if (parsed == null) {
+                    amountError = "Ingresa un monto mayor que 0"
+                    return@Button
+                }
                 viewModel.addIncome(name, parsed)
                 onDone()
             },
@@ -74,4 +87,3 @@ fun AddIncomeScreen(
         }
     }
 }
-

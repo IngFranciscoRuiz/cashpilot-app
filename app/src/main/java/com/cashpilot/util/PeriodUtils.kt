@@ -5,6 +5,13 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+/** Primer y último día del mes calendario actual (ingresos y gastos variables). */
+fun currentCalendarMonthRange(today: LocalDate = LocalDate.now()): Pair<LocalDate, LocalDate> {
+    val start = today.withDayOfMonth(1)
+    val end = today.withDayOfMonth(today.lengthOfMonth())
+    return start to end
+}
+
 fun currentPeriodRange(periodType: PeriodType): Pair<LocalDate, LocalDate> {
     val today = LocalDate.now()
     return when (periodType) {

@@ -76,7 +76,8 @@ class CashPilotRepository @Inject constructor(
         amount: Double,
         category: ExpenseCategory,
         date: LocalDate,
-        notes: String?
+        notes: String?,
+        sortOrderMillis: Long = System.currentTimeMillis()
     ) {
         expenseDao.insertExpense(
             ExpenseEntity(
@@ -84,10 +85,14 @@ class CashPilotRepository @Inject constructor(
                 amount = amount,
                 category = category,
                 date = date,
-                notes = notes
+                notes = notes,
+                sortOrderMillis = sortOrderMillis
             )
         )
     }
+
+    fun getTotalIncomeInDateRange(start: LocalDate, end: LocalDate): Flow<Double?> =
+        incomeDao.getTotalIncomeInDateRange(start, end)
 
     fun getVariableExpensesForRange(
         start: LocalDate,

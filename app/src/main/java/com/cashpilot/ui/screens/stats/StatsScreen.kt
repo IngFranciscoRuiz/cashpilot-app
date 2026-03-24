@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.cashpilot.ui.util.formatPesosMx
 
 private val chartColors = listOf(
     Color(0xFF2E7D32),
@@ -109,7 +110,7 @@ fun StatsScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "$${"%,.2f".format(state.dineroRestante)}",
+                    text = formatPesosMx(state.dineroRestante),
                     style = MaterialTheme.typography.headlineLarge,
                     color = if (state.dineroRestante >= 0)
                         MaterialTheme.colorScheme.onPrimary
@@ -142,7 +143,7 @@ fun StatsScreen(
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                 )
                 Text(
-                    text = "$${"%,.0f".format(state.dineroDelMes)}  /  -$${"%,.0f".format(totalGastos)}",
+                    text = "${formatPesosMx(state.dineroDelMes, decimals = false)}  /  -${formatPesosMx(totalGastos, decimals = false)}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
                 )
@@ -208,7 +209,7 @@ fun StatsScreen(
                     DonutChartWithCenter(
                         values = state.expenseByNameTotals.map { it.second.toFloat() },
                         colors = chartColors,
-                        centerLabel = "$${"%,.0f".format(state.expenseByNameTotals.sumOf { it.second })}"
+                        centerLabel = formatPesosMx(state.expenseByNameTotals.sumOf { it.second }, decimals = false)
                     )
                     Spacer(modifier = Modifier.height(20.dp))
                     val totalAll = state.expenseByNameTotals.sumOf { it.second }
@@ -299,12 +300,12 @@ fun StatsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Fijos $${"%,.0f".format(state.gastosFijos)}",
+                            text = "Fijos ${formatPesosMx(state.gastosFijos, decimals = false)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Variables $${"%,.0f".format(state.gastosVariables)}",
+                            text = "Variables ${formatPesosMx(state.gastosVariables, decimals = false)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -367,7 +368,7 @@ private fun SummaryRowWithDot(label: String, amount: Double, color: Color) {
             )
         }
         Text(
-            text = "$${"%,.2f".format(amount)}",
+            text = formatPesosMx(amount),
             style = MaterialTheme.typography.titleSmall,
             color = color,
             fontWeight = FontWeight.SemiBold
@@ -406,7 +407,7 @@ private fun LegendRowWithBar(
                 )
             }
             Text(
-                text = "$${"%,.0f".format(amount)} ($percent%)",
+                text = "${formatPesosMx(amount, decimals = false)} ($percent%)",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
             )

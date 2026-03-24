@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+import com.cashpilot.ui.util.parsePositiveMoneyOrNull
+import com.cashpilot.ui.util.sanitizeMoneyAmountInput
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
@@ -36,7 +38,7 @@ class ExpensesViewModel @Inject constructor(
         val parts = raw.trim().split(" ")
         if (parts.isEmpty()) return "" to ""
 
-        val amountPart = parts.firstOrNull()?.filter { it.isDigit() || it == '.' } ?: ""
+        val amountPart = parts.firstOrNull()?.let { sanitizeMoneyAmountInput(it) } ?: ""
         val descPart = parts.drop(1).joinToString(" ").ifBlank { "Gasto" }
 
         return amountPart to descPart
@@ -46,7 +48,7 @@ class ExpensesViewModel @Inject constructor(
         val parts = rawText.trim().split(" ")
         if (parts.isEmpty()) return
 
-        val amount = parts.firstOrNull()?.filter { it.isDigit() || it == '.' }?.toDoubleOrNull() ?: return
+        val amount = parts.firstOrNull()?.let { parsePositiveMoneyOrNull(it) } ?: return
         val desc = parts.drop(1).joinToString(" ").ifBlank { "Gasto" }
 
         val category = inferCategory(desc)
@@ -57,7 +59,8 @@ class ExpensesViewModel @Inject constructor(
                 amount = amount,
                 category = category,
                 date = LocalDate.now(),
-                notes = null
+                notes = null,
+                sortOrderMillis = System.currentTimeMillis()
             )
         }
     }
@@ -67,14 +70,16 @@ class ExpensesViewModel @Inject constructor(
         name: String,
         amount: Double,
         category: ExpenseCategory = ExpenseCategory.OTHER,
-        notes: String? = null
+        notes: String? = null,
+        date: LocalDate = LocalDate.now()
     ) {
         repository.addVariableExpense(
             name = name.ifBlank { "Gasto" },
             amount = amount,
             category = category,
-            date = LocalDate.now(),
-            notes = notes
+            date = date,
+            notes = notes,
+            sortOrderMillis = System.currentTimeMillis()
         )
     }
 

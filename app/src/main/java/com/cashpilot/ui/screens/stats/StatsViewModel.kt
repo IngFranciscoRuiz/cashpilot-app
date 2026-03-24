@@ -5,9 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.cashpilot.data.CashPilotRepository
 import com.cashpilot.data.local.entity.PeriodType
 import com.cashpilot.data.preferences.UserPreferencesRepository
-import com.cashpilot.util.currentPeriodRange
+import com.cashpilot.util.currentCalendarMonthRange
+import com.cashpilot.ui.util.formatPesosMx
+import com.cashpilot.util.formatSpanishMonthYear
 import com.cashpilot.util.groupExpensesByName
-import com.cashpilot.util.periodLabel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import java.time.LocalDate
 import javax.inject.Inject
 
 data class StatsUiState(
@@ -37,18 +37,18 @@ class StatsViewModel @Inject constructor(
     private val userPreferences: UserPreferencesRepository
 ) : ViewModel() {
 
-    private val today = LocalDate.now()
-
     val uiState: StateFlow<StatsUiState> =
         userPreferences.periodTypeFlow
             .flatMapLatest { periodType ->
-                val periodRange = currentPeriodRange(periodType)
+                val monthRange = currentCalendarMonthRange()
+                val monthStart = monthRange.first
+                val monthEnd = monthRange.second
                 combine(
-                    repository.getTotalIncomeForPeriod(periodType, periodRange.first, periodRange.second).map { it ?: 0.0 },
+                    repository.getTotalIncomeInDateRange(monthStart, monthEnd).map { it ?: 0.0 },
                     repository.getTotalFixedForPeriod(periodType).map { it ?: 0.0 },
-                    repository.getTotalVariableForRange(periodRange.first, periodRange.second).map { it ?: 0.0 },
+                    repository.getTotalVariableForRange(monthStart, monthEnd).map { it ?: 0.0 },
                     repository.getFixedExpensesForPeriod(periodType),
-                    repository.getVariableExpensesForRange(periodRange.first, today)
+                    repository.getVariableExpensesForRange(monthStart, monthEnd)
                 ) { income, fixed, variable, fixedList, variableList ->
                     val allByName = (fixedList.map { it.name to it.amount } + variableList.map { it.name to it.amount })
                         .filter { it.first.isNotBlank() && it.second.isFinite() }
@@ -63,17 +63,17 @@ class StatsViewModel @Inject constructor(
                     val insightText = if (top != null && top.second > 0) {
                         val name = top.first
                         val half = top.second / 2
-                        "Gastaste $${"%,.0f".format(top.second)} en $name este periodo. Si reduces a la mitad ahorrarías $${"%,.0f".format(half)}."
+                        "Gastaste ${formatPesosMx(top.second, decimals = false)} en $name este mes. Si reduces a la mitad ahorrarías ${formatPesosMx(half, decimals = false)}."
                     } else ""
                     val insight2 = when {
                         income <= 0 -> "Registra tus ingresos en la pestaña Ingresos para ver el resumen completo."
                         expenseByNameTotals.isEmpty() -> "Registra gastos (fijos y variables) para ver el desglose por nombre."
-                        remaining < 0 -> "Has superado tus ingresos este periodo. Revisa gastos variables para ajustar."
-                        remaining > 0 && totalGastos > 0 -> "Te quedan $${"%,.0f".format(remaining)} disponibles este periodo."
+                        remaining < 0 -> "Has superado tus ingresos este mes. Revisa gastos variables para ajustar."
+                        remaining > 0 && totalGastos > 0 -> "Te quedan ${formatPesosMx(remaining, decimals = false)} disponibles este mes."
                         else -> ""
                     }
                     StatsUiState(
-                        periodLabel = periodLabel(periodType),
+                        periodLabel = formatSpanishMonthYear(monthStart),
                         dineroDelMes = income,
                         gastosFijos = fixed,
                         gastosVariables = variable,

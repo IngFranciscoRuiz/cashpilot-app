@@ -10,13 +10,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -26,12 +34,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.cashpilot.ui.components.MoneyAmountOutlinedField
+import com.cashpilot.ui.util.parsePositiveMoneyOrNull
+import com.cashpilot.ui.util.sanitizeMoneyAmountInput
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cashpilot.data.local.entity.ExpenseCategory
 import com.cashpilot.ui.screens.expenses.ExpensesViewModel
+import com.cashpilot.util.formatSpanishDayMonthYear
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 private fun ExpenseCategory.displayName(): String = when (this) {
     ExpenseCategory.FOOD -> "Comida"
@@ -42,6 +56,7 @@ private fun ExpenseCategory.displayName(): String = when (this) {
     ExpenseCategory.OTHER -> "Otro"
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddExpenseScreen(
     onDone: () -> Unit,
@@ -50,6 +65,8 @@ fun AddExpenseScreen(
     var quickInput by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var showDatePicker by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf(ExpenseCategory.OTHER) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
@@ -77,12 +94,56 @@ fun AddExpenseScreen(
             maxLines = 4
         )
         Spacer(modifier = Modifier.height(12.dp))
+
         OutlinedTextField(
+            value = formatSpanishDayMonthYear(selectedDate),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Fecha") },
+            trailingIcon = {
+                IconButton(onClick = { showDatePicker = true }) {
+                    Icon(Icons.Default.DateRange, contentDescription = "Elegir fecha")
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        if (showDatePicker) {
+            val pickerMillis =
+                selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            val datePickerState = rememberDatePickerState(initialSelectedDateMillis = pickerMillis)
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            datePickerState.selectedDateMillis?.let { ms ->
+                                selectedDate = Instant.ofEpochMilli(ms)
+                                    .atZone(ZoneId.systemDefault())
+                                    .toLocalDate()
+                            }
+                            showDatePicker = false
+                        }
+                    ) {
+                        Text("Aceptar")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDatePicker = false }) {
+                        Text("Cancelar")
+                    }
+                }
+            ) {
+                DatePicker(state = datePickerState)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+        MoneyAmountOutlinedField(
             value = amount,
-            onValueChange = { amount = it.filter { c -> c.isDigit() || c == '.' }; errorMessage = null },
-            label = { Text("Monto") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            onValueChange = { amount = it; errorMessage = null },
             modifier = Modifier.fillMaxWidth(),
+            label = { Text("Monto") },
             isError = errorMessage != null
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -166,12 +227,12 @@ fun AddExpenseScreen(
                         } else "Gasto"
                     }
                     // Monto: prioridad al campo "Monto"; si no, extraer de entrada rápida
-                    var amt = amount.trim().replace(",", ".").toDoubleOrNull()
+                    var amt = parsePositiveMoneyOrNull(amount)
                     if (amt == null && quickInput.isNotBlank()) {
                         val firstPart = quickInput.trim().split(" ").filter { it.isNotBlank() }.firstOrNull()
-                        amt = firstPart?.filter { it.isDigit() || it == '.' }?.toDoubleOrNull()
+                        amt = firstPart?.let { parsePositiveMoneyOrNull(it) }
                     }
-                    if (amt == null || amt <= 0) {
+                    if (amt == null) {
                         errorMessage = "Escribe un monto válido mayor que 0"
                         return@launch
                     }
@@ -179,7 +240,8 @@ fun AddExpenseScreen(
                         viewModel.saveVariableExpense(
                             name = desc,
                             amount = amt,
-                            category = selectedCategory
+                            category = selectedCategory,
+                            date = selectedDate
                         )
                         onDone()
                     } catch (e: Exception) {

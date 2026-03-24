@@ -20,6 +20,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.cashpilot.ui.components.MoneyAmountOutlinedField
+import com.cashpilot.ui.util.formatPesosMx
+import com.cashpilot.ui.util.parsePositiveMoneyOrNull
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
@@ -53,9 +56,9 @@ fun FixedExpensesScreen(
             isError = errorMessage != null
         )
         Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
+        MoneyAmountOutlinedField(
             value = amount,
-            onValueChange = { amount = it.filter { c -> c.isDigit() || c == '.' }; errorMessage = null },
+            onValueChange = { amount = it; errorMessage = null },
             label = { Text("Monto") },
             modifier = Modifier.fillMaxWidth(),
             isError = errorMessage != null
@@ -81,11 +84,11 @@ fun FixedExpensesScreen(
         Button(
             onClick = {
                 errorMessage = null
-                val amt = amount.trim().replace(",", ".").toDoubleOrNull()
+                val amt = parsePositiveMoneyOrNull(amount)
                 val nombre = name.trim()
                 when {
                     nombre.isBlank() -> errorMessage = "Escribe un nombre"
-                    amt == null || amt <= 0 -> errorMessage = "El monto debe ser mayor que 0"
+                    amt == null -> errorMessage = "Ingresa un monto mayor que 0"
                     else -> {
                         viewModel.addFixedExpense(
                             name = nombre,
@@ -109,7 +112,7 @@ fun FixedExpensesScreen(
         LazyColumn {
             items(items) { item ->
                 Text(
-                    text = "${item.name}: $${"%,.2f".format(item.amount)}",
+                    text = "${item.name}: ${formatPesosMx(item.amount)}",
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Spacer(modifier = Modifier.height(8.dp))

@@ -29,6 +29,10 @@ interface IncomeDao {
         end: LocalDate
     ): Flow<Double?>
 
+    /** Suma de ingresos en un rango de fechas (mes calendario), sin filtrar por tipo de periodo. */
+    @Query("SELECT SUM(amount) FROM income WHERE date BETWEEN :start AND :end")
+    fun getTotalIncomeInDateRange(start: LocalDate, end: LocalDate): Flow<Double?>
+
     @Query("DELETE FROM income")
     suspend fun deleteAll()
 }

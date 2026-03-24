@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.cashpilot.ui.util.formatPesosMx
 
 @Composable
 fun HistoryScreen(
@@ -36,7 +37,7 @@ fun HistoryScreen(
         LazyColumn {
             items(items) { item ->
                 Text(
-                    text = "${item.date}: ${item.name} - $${"%,.2f".format(item.amount)}",
+                    text = "${item.date}: ${item.name} - ${formatPesosMx(item.amount)}",
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Spacer(modifier = Modifier.height(8.dp))

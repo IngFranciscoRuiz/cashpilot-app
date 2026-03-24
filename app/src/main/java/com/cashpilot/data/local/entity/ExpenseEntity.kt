@@ -11,7 +11,9 @@ data class ExpenseEntity(
     val amount: Double,
     val category: ExpenseCategory,
     val date: LocalDate,
-    val notes: String?
+    val notes: String?,
+    /** Para ordenar dentro del mismo día (más reciente primero). Migración: id * 1000 en datos viejos. */
+    val sortOrderMillis: Long = 0L
 )
 
 enum class ExpenseCategory {

@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import com.cashpilot.util.currentPeriodRange
+import com.cashpilot.util.currentCalendarMonthRange
 import com.cashpilot.util.groupExpensesByName
 import java.time.LocalDate
 import javax.inject.Inject
@@ -46,12 +46,12 @@ class DashboardViewModel @Inject constructor(
     val uiState: StateFlow<DashboardUiState> =
         period
             .flatMapLatest { periodType ->
-                val range = currentPeriodRange(periodType)
-                val start = range.first
-                val end = range.second
+                val monthRange = currentCalendarMonthRange()
+                val monthStart = monthRange.first
+                val monthEnd = monthRange.second
 
                 val incomeFlow = repository
-                    .getTotalIncomeForPeriod(periodType, start, end)
+                    .getTotalIncomeInDateRange(monthStart, monthEnd)
                     .map { it ?: 0.0 }
 
                 val fixedFlow = repository
@@ -59,11 +59,11 @@ class DashboardViewModel @Inject constructor(
                     .map { it ?: 0.0 }
 
                 val variableFlow = repository
-                    .getTotalVariableForRange(start, end)
+                    .getTotalVariableForRange(monthStart, monthEnd)
                     .map { it ?: 0.0 }
 
                 val fixedListFlow = repository.getFixedExpensesForPeriod(periodType)
-                val variableListFlow = repository.getVariableExpensesForRange(start, end)
+                val variableListFlow = repository.getVariableExpensesForRange(monthStart, monthEnd)
 
                 combine(
                     incomeFlow,
@@ -77,7 +77,7 @@ class DashboardViewModel @Inject constructor(
                     val topExpensesByName = byName.take(7)
 
                     val today = LocalDate.now()
-                    val daysLeft = (end.toEpochDay() - today.toEpochDay()).toInt().coerceAtLeast(1)
+                    val daysLeft = (monthEnd.toEpochDay() - today.toEpochDay()).toInt().coerceAtLeast(1)
                     val remaining = income - fixed - variable
                     val daily = if (remaining > 0) remaining / daysLeft else 0.0
 

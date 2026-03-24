@@ -4,12 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cashpilot.data.CashPilotRepository
 import com.cashpilot.data.local.entity.ExpenseEntity
+import com.cashpilot.util.currentCalendarMonthRange
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -22,9 +22,8 @@ class HistoryViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val today = LocalDate.now()
-            val start = today.minusMonths(1)
-            repository.getVariableExpensesForRange(start, today).collect { list ->
+            val month = currentCalendarMonthRange()
+            repository.getVariableExpensesForRange(month.first, month.second).collect { list ->
                 _history.value = list
             }
         }

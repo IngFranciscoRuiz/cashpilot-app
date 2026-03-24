@@ -15,7 +15,10 @@ interface ExpenseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertExpense(expense: ExpenseEntity)
 
-    @Query("SELECT * FROM expense WHERE date BETWEEN :start AND :end ORDER BY date DESC")
+    @Query(
+        "SELECT * FROM expense WHERE date BETWEEN :start AND :end " +
+            "ORDER BY date DESC, sortOrderMillis DESC, id DESC"
+    )
     fun getExpensesForRange(
         start: LocalDate,
         end: LocalDate

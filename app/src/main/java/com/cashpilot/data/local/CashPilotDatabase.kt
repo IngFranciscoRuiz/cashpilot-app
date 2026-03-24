@@ -16,7 +16,7 @@ import com.cashpilot.data.local.entity.IncomeEntity
         FixedExpenseEntity::class,
         ExpenseEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

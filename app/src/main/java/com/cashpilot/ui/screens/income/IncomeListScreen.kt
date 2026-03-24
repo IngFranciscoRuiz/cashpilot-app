@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.cashpilot.ui.util.formatPesosMx
 
 @Composable
 fun IncomeListScreen(
@@ -57,7 +58,7 @@ fun IncomeListScreen(
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
         )
         Text(
-            text = "$${"%,.2f".format(state.totalDisponible)}",
+            text = formatPesosMx(state.totalDisponible),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.SemiBold
@@ -90,7 +91,7 @@ private fun IncomeRow(name: String, amount: Double) {
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
-            text = "$${"%,.2f".format(amount)}",
+            text = formatPesosMx(amount),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.SemiBold

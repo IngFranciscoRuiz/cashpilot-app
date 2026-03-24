@@ -123,8 +123,8 @@ fun CashPilotNavHost(
             composable(Screen.Dashboard.route) {
                 DashboardScreen(
                     onAddIncome = { navController.navigate(Screen.AddIncome.route) },
-                    onAddExpense = { navController.navigate(Screen.AddExpense.route) },
-                    onManageFixed = { navController.navigate(Screen.FixedExpenses.route) }
+                    onAddVariableExpense = { navController.navigate(Screen.AddExpense.route) },
+                    onOpenFixedExpenses = { navController.navigate(Screen.FixedExpenses.route) }
                 )
             }
             composable(Screen.IncomeList.route) {

@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
@@ -26,14 +27,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.cashpilot.data.local.entity.PeriodType
+import com.cashpilot.ui.util.formatPesosMx
 import com.cashpilot.util.periodLabel
 
 @Composable
 fun DashboardScreen(
     onAddIncome: () -> Unit,
-    onAddExpense: () -> Unit,
-    onManageFixed: () -> Unit,
+    onAddVariableExpense: () -> Unit,
+    onOpenFixedExpenses: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -61,7 +62,9 @@ fun DashboardScreen(
 
         // Tarjeta grande: Ingreso
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onAddIncome() },
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
             shape = RoundedCornerShape(20.dp)
         ) {
@@ -72,7 +75,7 @@ fun DashboardScreen(
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
                 )
                 Text(
-                    text = "$${"%,.2f".format(uiState.totalIncome)}",
+                    text = formatPesosMx(uiState.totalIncome),
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.Bold
@@ -89,7 +92,7 @@ fun DashboardScreen(
             Card(
                 modifier = Modifier
                     .weight(1f)
-                    .clickable { onManageFixed() },
+                    .clickable { onOpenFixedExpenses() },
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                 shape = RoundedCornerShape(18.dp)
             ) {
@@ -101,7 +104,7 @@ fun DashboardScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "$${"%,.2f".format(uiState.totalFixed)}",
+                        text = formatPesosMx(uiState.totalFixed),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         fontWeight = FontWeight.SemiBold
@@ -109,7 +112,9 @@ fun DashboardScreen(
                 }
             }
             Card(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onAddVariableExpense() },
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
                 shape = RoundedCornerShape(18.dp)
             ) {
@@ -121,7 +126,7 @@ fun DashboardScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "-$${"%,.2f".format(uiState.totalVariable)}",
+                        text = "-${formatPesosMx(uiState.totalVariable)}",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         fontWeight = FontWeight.SemiBold
@@ -132,15 +137,25 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Botón principal: + Registrar gasto (bien visible sobre el bottom nav)
+        // Registrar gasto variable o fijo (misma navegación que las tarjetas)
         Button(
-            onClick = onAddExpense,
+            onClick = onAddVariableExpense,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
+                .height(52.dp),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Text("+ Registrar gasto", fontWeight = FontWeight.SemiBold)
+            Text("+ Registrar gasto variable", fontWeight = FontWeight.SemiBold)
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        OutlinedButton(
+            onClick = onOpenFixedExpenses,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Text("+ Registrar gasto fijo", fontWeight = FontWeight.SemiBold)
         }
 
         // Barra: Ingresos vs Gastos totales (rojo = gasto consumido)
@@ -160,7 +175,7 @@ fun DashboardScreen(
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                 )
                 Text(
-                    text = "$${"%,.0f".format(uiState.totalIncome)}  /  -$${"%,.0f".format(totalGastos)}",
+                    text = "${formatPesosMx(uiState.totalIncome, decimals = false)}  /  -${formatPesosMx(totalGastos, decimals = false)}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
                 )
@@ -184,7 +199,7 @@ fun DashboardScreen(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Añade ingresos (Ingresos) y gastos fijos (toca Gastos fijos arriba). Si ya registraste datos en otro periodo, cámbialo en Ajustes.",
+                    text = "Añade ingresos (pestaña Ingresos) y gastos: toca Gastos fijos o Gastos variables arriba, o usa los botones de abajo. Si cambiaste de periodo en Ajustes, revisa tus datos.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
                     modifier = Modifier.padding(14.dp)
@@ -218,7 +233,7 @@ fun DashboardScreen(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "-$${"%,.2f".format(amount)}",
+                                text = "-${formatPesosMx(amount)}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.error
                             )
